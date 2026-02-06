@@ -1,7 +1,6 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithPopup } from "firebase/auth";
-import api from "../api/axios";
 import { AppContext } from "../context/AppContext";
 import Toast from "../components/Toast";
 import { auth, googleProvider } from "../firebase";
