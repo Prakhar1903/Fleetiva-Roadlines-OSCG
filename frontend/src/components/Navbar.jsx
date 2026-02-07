@@ -1,30 +1,66 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useContext } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext } from "../context/appContextStore";
+import { safeStorage } from "../utils/storage";
+
+const getRole = (user) => user?.role || safeStorage.get("role") || "customer";
 
 export default function Navbar() {
-  const navigate = useNavigate();
   const { user, logout } = useContext(AppContext);
-  const role = localStorage.getItem("role");
+  const role = getRole(user);
 
   if (!user) return null;
 
+  const dashboardRoute =
+    role === "superadmin"
+      ? "/superadmin"
+      : role === "admin"
+      ? "/admin"
+      : role === "driver"
+      ? "/driver"
+      : "/dashboard";
+
   return (
-    <nav style={{ padding: "10px 20px", background: "#111827", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-        <Link to={role === "superadmin" ? "/superadmin" : role === "admin" ? "/admin" : role === "driver" ? "/driver" : "/"} style={{ color: "#fff", textDecoration: "none", fontWeight: "bold", fontSize: "1.2rem" }}>
-          🚚 Logistics MS
-        </Link>
-        {role === "superadmin" && <Link to="/superadmin" style={{ color: "#fff", textDecoration: "none" }}>Company Management</Link>}
-        {role === "superadmin" && <Link to="/superadmin/logs" style={{ color: "#fff", textDecoration: "none" }}>System Logs</Link>}
-        {role === "customer" && <Link to="/post-load" style={{ color: "#fff", textDecoration: "none" }}>Post Load</Link>}
-        {role === "driver" && <Link to="/post-truck" style={{ color: "#fff", textDecoration: "none" }}>Post Truck</Link>}
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
-        <span style={{ fontSize: "0.8rem", opacity: 0.8 }}>Role: {role}</span>
-        <button onClick={logout} style={{ background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", padding: "5px 10px", borderRadius: "4px" }}>
-          Logout
-        </button>
+    <nav className="navbar">
+      <div className="navbar-content">
+        <NavLink to={dashboardRoute} className="navbar-brand">
+          <span aria-hidden>🚚</span>
+          Fleetiva Roadlines
+        </NavLink>
+
+        <div className="navbar-links">
+          <NavLink to={dashboardRoute} className="nav-link">
+            Dashboard
+          </NavLink>
+          {role === "superadmin" && (
+            <>
+              <NavLink to="/superadmin" className="nav-link">
+                Company Management
+              </NavLink>
+              <NavLink to="/superadmin/logs" className="nav-link">
+                System Logs
+              </NavLink>
+            </>
+          )}
+          {role === "customer" && (
+            <NavLink to="/post-load" className="nav-link">
+              Post Load
+            </NavLink>
+          )}
+          {role === "driver" && (
+            <NavLink to="/post-truck" className="nav-link">
+              Post Truck
+            </NavLink>
+          )}
+        </div>
+
+        <div className="navbar-actions">
+          <span className="chip">{user?.email || "Signed in"}</span>
+          <span className="chip">Role: {role}</span>
+          <button onClick={logout} className="btn btn-danger">
+            Logout
+          </button>
+        </div>
       </div>
     </nav>
   );

@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppContext";
+import { AppContext } from "../context/appContextStore";
 import Toast from "../components/Toast";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
@@ -8,6 +8,7 @@ import { auth } from "../firebase";
 export default function Register() {
   const navigate = useNavigate();
   const { loading, setLoading } = useContext(AppContext);
+  const authUnavailable = !auth;
 
   const [error, setError] = useState("");
 
@@ -22,13 +23,17 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+    if (authUnavailable) {
+      setError("Authentication is not configured. Please set Firebase env values.");
+      return;
+    }
 
     setError("");
     setLoading(true);
 
     try {
       await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      navigate("/dashboard"); // 🔥 redirect directly to dashboard after registration
+      navigate("/dashboard");
     } catch (err) {
       setError(err.message || "Registration failed");
     } finally {
@@ -37,16 +42,26 @@ export default function Register() {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>Create Account</h2>
+    <div className="auth-layout">
+      <div className="auth-card">
+        <h2 className="page-title" style={{ textAlign: "center" }}>
+          Create account
+        </h2>
+        <p className="page-subtitle" style={{ textAlign: "center" }}>
+          Join Fleetiva Roadlines to manage shipments effortlessly.
+        </p>
 
         {error && <Toast message={error} />}
+        {authUnavailable && (
+          <p className="text-muted" style={{ textAlign: "center", marginTop: 12 }}>
+            Firebase authentication is not configured for this environment.
+          </p>
+        )}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <form onSubmit={handleSubmit} className="form" style={{ marginTop: 24 }}>
           <input
             placeholder="Company Name"
-            style={styles.input}
+            className="input"
             onChange={(e) =>
               setFormData({ ...formData, companyName: e.target.value })
             }
@@ -55,17 +70,15 @@ export default function Register() {
           <input
             placeholder="Full Name"
             required
-            style={styles.input}
-            onChange={(e) =>
-              setFormData({ ...formData, name: e.target.value })
-            }
+            className="input"
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
 
           <input
             type="email"
             placeholder="Email"
             required
-            style={styles.input}
+            className="input"
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
             }
@@ -74,17 +87,15 @@ export default function Register() {
           <input
             placeholder="Phone Number"
             required
-            style={styles.input}
-            onChange={(e) =>
-              setFormData({ ...formData, phone: e.target.value })
-            }
+            className="input"
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           />
 
           <input
             type="password"
             placeholder="Password"
             required
-            style={styles.input}
+            className="input"
             onChange={(e) =>
               setFormData({ ...formData, password: e.target.value })
             }
@@ -92,74 +103,27 @@ export default function Register() {
 
           <select
             value={formData.role}
-            style={styles.input}
-            onChange={(e) =>
-              setFormData({ ...formData, role: e.target.value })
-            }
+            className="select"
+            onChange={(e) => setFormData({ ...formData, role: e.target.value })}
           >
             <option value="customer">Customer</option>
             <option value="driver">Driver</option>
             <option value="admin">Admin</option>
           </select>
 
-          <button type="submit" disabled={loading} style={styles.button}>
+          <button
+            type="submit"
+            disabled={loading || authUnavailable}
+            className="btn btn-primary"
+          >
             {loading ? "Creating account..." : "Register"}
           </button>
         </form>
 
-        <p style={styles.footerText}>
+        <p className="text-muted" style={{ textAlign: "center", marginTop: 20 }}>
           Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
     </div>
   );
 }
-
-/* STYLES */
-const styles = {
-  container: {
-    minHeight: "100vh",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    background: "#f3f4f6",
-  },
-  card: {
-    width: 420,
-    padding: 30,
-    background: "#fff",
-    borderRadius: 10,
-    boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-  },
-  title: {
-    marginBottom: 20,
-    textAlign: "center",
-    fontSize: 22,
-    fontWeight: 600,
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 12,
-  },
-  input: {
-    padding: 10,
-    fontSize: 14,
-    borderRadius: 6,
-    border: "1px solid #d1d5db",
-  },
-  button: {
-    padding: 12,
-    background: "#2563eb",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    cursor: "pointer",
-    fontWeight: 500,
-  },
-  footerText: {
-    marginTop: 16,
-    textAlign: "center",
-    fontSize: 14,
-  },
-};
