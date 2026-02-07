@@ -33,6 +33,14 @@ It provides a centralized ecosystem for Logistics Companies (Tenants) to manage 
 ---
 
 ## 🚀 Getting Started
+## 🚀 Quick Start (Beginner Friendly)
+
+Follow these steps to run the project locally.
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/Fleetiva-Roadlines.git
+cd Fleetiva-Roadlines
 
 ### Prerequisites
 
@@ -47,7 +55,17 @@ It provides a centralized ecosystem for Logistics Companies (Tenants) to manage 
    ```bash
    git clone https://github.com/your-username/logistics-transport-system.git
    cd logistics-transport-system
-   ```
+ ```
+## 🧪 Verifying the Setup
+
+
+After starting both backend and frontend:
+
+- Open http://localhost:3000 in your browser
+- Ensure the frontend loads without errors
+- Check backend logs to confirm MongoDB is connected
+
+If the application loads successfully, the setup is complete 🎉
 
 2. **Backend Setup:**
    ```bash
