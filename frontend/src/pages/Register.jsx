@@ -54,16 +54,6 @@ export default function Register() {
     return response.data.user.role;
   };
 
-  const isFirebaseAvailable = async () => {
-    if (!hasFirebaseConfig) return false;
-    try {
-      const response = await api.get("/auth/firebase/status");
-      return Boolean(response.data?.available);
-    } catch (err) {
-      return false;
-    }
-  };
-
   const validateRegisterForm = (data) => {
     const { companyName, name, email, phone, password } = data;
 
@@ -103,12 +93,10 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const role =
-        hasFirebaseConfig && (await isFirebaseAvailable())
-          ? await registerWithFirebase()
-          : await registerWithApi();
-      if (role === "superadmin") navigate("/superadmin", { replace: true });
-      else if (role === "admin") navigate("/admin", { replace: true });
+      const role = hasFirebaseConfig
+        ? await registerWithFirebase()
+        : await registerWithApi();
+      if (role === "admin") navigate("/admin", { replace: true });
       else if (role === "driver") navigate("/driver", { replace: true });
       else navigate("/dashboard", { replace: true });
     } catch (err) {
@@ -203,7 +191,6 @@ export default function Register() {
             <option value="customer">Customer</option>
             <option value="driver">Driver</option>
             <option value="admin">Admin</option>
-            <option value="superadmin">Super Admin</option>
           </select>
 
           <button type="submit" disabled={loading} className="btn btn-primary">

@@ -52,7 +52,7 @@ router.post('/register', async (req, res) => {
     return res.status(400).json({ message: 'Password must be at least 8 characters.' });
   }
 
-  if (!['customer', 'driver', 'admin', 'superadmin'].includes(role)) {
+  if (!['customer', 'driver', 'admin'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role.' });
   }
 
@@ -197,16 +197,12 @@ router.post('/firebase/login', async (req, res) => {
   });
 });
 
-router.get('/firebase/status', (req, res) => {
-  res.json({ available: firebaseReady() });
-});
-
 router.post('/firebase/register', async (req, res) => {
   const { idToken, name, phone, role = 'customer', companyName } = req.body;
   if (!idToken || !name || !phone) {
     return res.status(400).json({ message: 'ID token, name, and phone are required.' });
   }
-  if (!['customer', 'driver', 'admin', 'superadmin'].includes(role)) {
+  if (!['customer', 'driver', 'admin'].includes(role)) {
     return res.status(400).json({ message: 'Invalid role.' });
   }
   if (!firebaseReady()) {
