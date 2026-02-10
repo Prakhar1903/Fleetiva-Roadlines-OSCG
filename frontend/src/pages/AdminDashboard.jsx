@@ -103,10 +103,14 @@ export default function AdminDashboard() {
     }
   };
 
-  const recordPayment = async (bookingId) => {
+  const recordPayment = async (bookingId, status) => {
     try {
-      await api.post(`/booking/${bookingId}/payment`, { status: "paid" });
-      alert("Payment Recorded Successfully!");
+      await api.post(`/booking/${bookingId}/payment`, { status });
+      alert(
+        status === "paid"
+          ? "Payment Recorded Successfully!"
+          : "Payment status reset to pending."
+      );
       fetchData();
     } catch (error) {
       console.error("Error recording payment:", error);
@@ -356,9 +360,19 @@ export default function AdminDashboard() {
                 <button className="btn btn-secondary" onClick={() => downloadInvoice(b._id)}>
                   Download Invoice
                 </button>
-                {b.paymentStatus !== "paid" && (
-                  <button className="btn btn-outline" onClick={() => recordPayment(b._id)}>
-                    Record Payment
+                {b.paymentStatus !== "paid" ? (
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => recordPayment(b._id, "paid")}
+                  >
+                    Mark Paid
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => recordPayment(b._id, "pending")}
+                  >
+                    Mark Unpaid
                   </button>
                 )}
               </div>
