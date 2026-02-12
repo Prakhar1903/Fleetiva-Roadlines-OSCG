@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const admin = require('firebase-admin');
 const User = require('../models/User');
 const LoginLog = require('../models/LoginLog');
-const { twilioClient, redisClient } = require('../config/clients');
+const { redisClient } = require('../config/clients');
 const sendEmail = require('../utils/email');
 const { registerSchema, loginSchema, firebaseRegisterSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validations/authValidation');
 
