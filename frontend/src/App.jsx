@@ -20,6 +20,15 @@ import Profile from "./pages/Profile";
 import Stats from "./pages/Stats";
 import MyLoads from "./pages/MyLoads";
 import MyTrucks from "./pages/MyTrucks";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from "react-router-dom";
+
+import { AppContext } from "./context/AppContext"; // adjust path if needed
+
 
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useContext(AppContext);
