@@ -66,6 +66,7 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  margin-bottom: 4vh;
 }
 
 .hero {
@@ -1961,7 +1962,7 @@ textarea:focus {
 .landing-page {
   position: relative;
   min-height: calc(100vh - 72px);
-  padding: 48px 24px 64px;
+  padding: 48px 0 0;
   background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
   overflow: hidden;
 }
