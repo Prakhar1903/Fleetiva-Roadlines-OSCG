@@ -60,6 +60,10 @@ describe("SuperAdminDashboard", () => {
         fireEvent.click(deactivateBtn);
 
         expect(api.patch).toHaveBeenCalledWith("/tenants/1/status", { isActive: false });
+
+        await waitFor(() => {
+            expect(toast.success).toHaveBeenCalledWith("Status updated successfully");
+        });
     });
 
     it("shows toast error on toggle failure", async () => {

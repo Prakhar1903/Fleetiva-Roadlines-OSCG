@@ -1,6 +1,6 @@
 # UX Redesign Rationale
 
-This document outlines the rationale behind the recent UX overhaul and provide guidelines for maintaining the new clean, modern aesthetic.
+This document outlines the rationale behind the recent UX overhaul and provides guidelines for maintaining the new clean, modern aesthetic.
 
 ## Goals
 
