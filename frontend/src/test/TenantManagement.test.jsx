@@ -1,0 +1,106 @@
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { vi } from "vitest";
+import SuperAdminDashboard from "../pages/SuperAdminDashboard";
+import api from "../api/axios";
+import { toast } from "react-hot-toast";
+import { HelmetProvider } from "react-helmet-async";
+
+vi.mock("../api/axios");
+vi.mock("react-hot-toast");
+
+describe("SuperAdminDashboard", () => {
+    const mockTenants = [
+        { _id: "1", name: "Company A", isActive: true, plan: "pro" },
+        { _id: "2", name: "Company B", isActive: false, plan: "basic" },
+    ];
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        api.get.mockResolvedValue({ data: mockTenants });
+    });
+
+    it("renders tenants correctly", async () => {
+        render(
+            <HelmetProvider>
+                <SuperAdminDashboard />
+            </HelmetProvider>
+        );
+
+        expect(screen.getByText(/Company Management/i)).toBeInTheDocument();
+
+        await waitFor(() => {
+            expect(screen.getByText("Company A")).toBeInTheDocument();
+            expect(screen.getByText("Company B")).toBeInTheDocument();
+        });
+    });
+
+    it("toggles tenant status on button click", async () => {
+        api.patch.mockResolvedValueOnce({});
+
+        render(
+            <HelmetProvider>
+                <SuperAdminDashboard />
+            </HelmetProvider>
+        );
+
+        const deactivateBtn = await screen.findByText("Deactivate");
+        fireEvent.click(deactivateBtn);
+
+        expect(api.patch).toHaveBeenCalledWith("/tenants/1/status", { isActive: false });
+    });
+
+    it("shows toast error on toggle failure", async () => {
+        api.patch.mockRejectedValueOnce(new Error("Update failed"));
+
+        render(
+            <HelmetProvider>
+                <SuperAdminDashboard />
+            </HelmetProvider>
+        );
+
+        const deactivateBtn = await screen.findByText("Deactivate");
+        fireEvent.click(deactivateBtn);
+
+        await waitFor(() => {
+            expect(toast.error).toHaveBeenCalledWith("Error updating tenant status");
+        });
+    });
+
+    it("filters tenants by search query", async () => {
+        render(
+            <HelmetProvider>
+                <SuperAdminDashboard />
+            </HelmetProvider>
+        );
+
+        await waitFor(() => screen.getByText("Company A"));
+
+        const searchInput = screen.getByPlaceholderText(/Search companies.../i);
+        fireEvent.change(searchInput, { target: { value: "Company A" } });
+
+        expect(screen.getByText("Company A")).toBeInTheDocument();
+        expect(screen.queryByText("Company B")).not.toBeInTheDocument();
+    });
+
+    it("filters tenants by status", async () => {
+        render(
+            <HelmetProvider>
+                <SuperAdminDashboard />
+            </HelmetProvider>
+        );
+
+        await waitFor(() => screen.getByText("Company A"));
+
+        const statusSelect = screen.getByRole("combobox");
+
+        // Filter by Active
+        fireEvent.change(statusSelect, { target: { value: "active" } });
+        expect(screen.getByText("Company A")).toBeInTheDocument();
+        expect(screen.queryByText("Company B")).not.toBeInTheDocument();
+
+        // Filter by Inactive
+        fireEvent.change(statusSelect, { target: { value: "inactive" } });
+        expect(screen.queryByText("Company A")).not.toBeInTheDocument();
+        expect(screen.getByText("Company B")).toBeInTheDocument();
+    });
+});
