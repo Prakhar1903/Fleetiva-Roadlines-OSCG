@@ -4,9 +4,29 @@ import SuperAdminDashboard from "../pages/SuperAdminDashboard";
 import api from "../api/axios";
 import { toast } from "react-hot-toast";
 import { HelmetProvider } from "react-helmet-async";
+import { MemoryRouter } from "react-router-dom";
+import { AppContext } from "../context/AppContext";
 
 vi.mock("../api/axios");
 vi.mock("react-hot-toast");
+
+const MockAppProvider = ({ children }) => (
+    <AppContext.Provider value={{ user: { name: "Admin Test", role: "superadmin" }, logout: vi.fn() }}>
+        {children}
+    </AppContext.Provider>
+);
+
+const renderWithProviders = (ui) => {
+    return render(
+        <MockAppProvider>
+            <MemoryRouter>
+                <HelmetProvider>
+                    {ui}
+                </HelmetProvider>
+            </MemoryRouter>
+        </MockAppProvider>
+    );
+};
 
 describe("SuperAdminDashboard", () => {
     const mockTenants = [
@@ -20,13 +40,10 @@ describe("SuperAdminDashboard", () => {
     });
 
     it("renders tenants correctly", async () => {
-        render(
-            <HelmetProvider>
-                <SuperAdminDashboard />
-            </HelmetProvider>
-        );
+        renderWithProviders(<SuperAdminDashboard />);
 
-        expect(screen.getByText(/Company Management/i)).toBeInTheDocument();
+        // Updated for new layout content
+        expect(screen.getByText(/Oversee tenant subscriptions/i)).toBeInTheDocument();
 
         await waitFor(() => {
             expect(screen.getByText("Company A")).toBeInTheDocument();
@@ -37,11 +54,7 @@ describe("SuperAdminDashboard", () => {
     it("toggles tenant status on button click", async () => {
         api.patch.mockResolvedValueOnce({});
 
-        render(
-            <HelmetProvider>
-                <SuperAdminDashboard />
-            </HelmetProvider>
-        );
+        renderWithProviders(<SuperAdminDashboard />);
 
         const deactivateBtn = await screen.findByText("Deactivate");
         fireEvent.click(deactivateBtn);
@@ -52,11 +65,7 @@ describe("SuperAdminDashboard", () => {
     it("shows toast error on toggle failure", async () => {
         api.patch.mockRejectedValueOnce(new Error("Update failed"));
 
-        render(
-            <HelmetProvider>
-                <SuperAdminDashboard />
-            </HelmetProvider>
-        );
+        renderWithProviders(<SuperAdminDashboard />);
 
         const deactivateBtn = await screen.findByText("Deactivate");
         fireEvent.click(deactivateBtn);
@@ -67,11 +76,7 @@ describe("SuperAdminDashboard", () => {
     });
 
     it("filters tenants by search query", async () => {
-        render(
-            <HelmetProvider>
-                <SuperAdminDashboard />
-            </HelmetProvider>
-        );
+        renderWithProviders(<SuperAdminDashboard />);
 
         await waitFor(() => screen.getByText("Company A"));
 
@@ -83,11 +88,7 @@ describe("SuperAdminDashboard", () => {
     });
 
     it("filters tenants by status", async () => {
-        render(
-            <HelmetProvider>
-                <SuperAdminDashboard />
-            </HelmetProvider>
-        );
+        renderWithProviders(<SuperAdminDashboard />);
 
         await waitFor(() => screen.getByText("Company A"));
 

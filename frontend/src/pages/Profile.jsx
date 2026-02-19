@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from "react";
-import { AppContext } from "../context/AppContext";
+import { AppContext } from "../context/appContextStore";
 import api from "../api/axios";
 
 export default function Profile() {

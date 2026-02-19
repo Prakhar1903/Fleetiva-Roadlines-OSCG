@@ -4,9 +4,13 @@ const bcrypt = require('bcryptjs');
 const admin = require('firebase-admin');
 const User = require('../models/User');
 const LoginLog = require('../models/LoginLog');
-const { twilioClient, redisClient } = require('../config/clients');
+const { redisClient } = require('../config/clients');
+const sendEmail = require('../utils/email');
 const { registerSchema, loginSchema, firebaseRegisterSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validations/authValidation');
 const asyncHandler = require('../utils/asyncHandler');
+
+// Fallback in-memory OTP store if Redis is unavailable
+const otpStore = new Map();
 
 const router = express.Router();
 
@@ -266,7 +270,7 @@ router.get('/me', require('../middleware/combinedAuth').authenticate, asyncHandl
 }));
 
 router.post('/forgot-password', asyncHandler(async (req, res) => {
-  const { error } = forgotPasswordSchema.validate(req.body, { abortEarly: false });
+  const { error, value } = forgotPasswordSchema.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({
       message: 'Validation failed',
@@ -274,27 +278,25 @@ router.post('/forgot-password', asyncHandler(async (req, res) => {
     });
   }
 
-  const { phone } = req.body;
+  const { email } = value;
 
-  const user = await User.findOne({ phone });
-  if (!user) return res.status(404).json({ message: 'User not found.' });
 
-  if (!redisClient) {
-    return res.status(503).json({ message: 'OTP service unavailable.' });
-  }
+  // check removed to ensure OTP sends regardless of user existence
 
   const otp = `${Math.floor(100000 + Math.random() * 900000)}`;
-  await redisClient.set(`otp:${phone}`, otp, { EX: OTP_TTL_SECONDS });
 
-  if (!twilioClient) {
-    return res.status(503).json({ message: 'SMS service unavailable.' });
+  // Store OTP (Redis or Memory)
+  if (redisClient) {
+    await redisClient.set(`otp:${email}`, otp, { EX: OTP_TTL_SECONDS });
+  } else {
+    otpStore.set(email, { otp, expires: Date.now() + OTP_TTL_SECONDS * 1000 });
   }
 
-  await twilioClient.messages.create({
-    body: `Your Fleetiva OTP is ${otp}. It expires in ${Math.floor(OTP_TTL_SECONDS / 60)} minutes.`,
-    from: process.env.TWILIO_FROM_NUMBER,
-    to: phone,
-  });
+  await sendEmail(
+    email,
+    'Your Fleetiva OTP Code',
+    `<p>Your Fleetiva OTP is <strong>${otp}</strong>.</p><p>It expires in ${Math.floor(OTP_TTL_SECONDS / 60)} minutes.</p>`
+  );
 
   res.json({ message: 'OTP sent successfully.' });
 }));
@@ -308,22 +310,34 @@ router.post('/reset-password', asyncHandler(async (req, res) => {
     });
   }
 
-  const { phone, otp, newPassword } = value;
+  const { email, otp, newPassword } = value;
+  let storedOtp = null;
 
-  if (!redisClient) {
-    return res.status(503).json({ message: 'OTP service unavailable.' });
+  if (redisClient) {
+    storedOtp = await redisClient.get(`otp:${email}`);
+  } else {
+    const data = otpStore.get(email);
+    if (data && data.expires > Date.now()) {
+      storedOtp = data.otp;
+    } else {
+      otpStore.delete(email); // Cleanup expired
+    }
   }
 
-  const storedOtp = await redisClient.get(`otp:${phone}`);
   if (!storedOtp || storedOtp !== otp) {
     return res.status(400).json({ message: 'Invalid or expired OTP.' });
   }
 
   const hashed = await bcrypt.hash(newPassword, 12);
-  const user = await User.findOneAndUpdate({ phone }, { password: hashed }, { new: true });
+  const user = await User.findOneAndUpdate({ email }, { password: hashed }, { new: true });
   if (!user) return res.status(404).json({ message: 'User not found.' });
 
-  await redisClient.del(`otp:${phone}`);
+  // Cleanup OTP
+  if (redisClient) {
+    await redisClient.del(`otp:${email}`);
+  } else {
+    otpStore.delete(email);
+  }
 
   res.json({ message: 'Password updated successfully.' });
 }));

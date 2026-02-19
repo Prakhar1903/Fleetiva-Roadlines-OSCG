@@ -23,11 +23,11 @@ const firebaseRegisterSchema = Joi.object({
 });
 
 const forgotPasswordSchema = Joi.object({
-  phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required()
+  email: Joi.string().email().required()
 });
 
 const resetPasswordSchema = Joi.object({
-  phone: Joi.string().pattern(/^\+?[1-9]\d{1,14}$/).required(),
+  email: Joi.string().email().required(),
   otp: Joi.string().length(6).required(),
   newPassword: Joi.string().min(8).max(128).required()
 });

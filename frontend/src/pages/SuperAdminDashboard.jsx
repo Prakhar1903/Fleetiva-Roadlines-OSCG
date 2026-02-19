@@ -1,10 +1,15 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useContext } from "react";
 import { Helmet } from "react-helmet-async";
 import api from "../api/axios";
 import { toast } from "react-hot-toast";
+import DashboardLayout from "../components/DashboardLayout";
+import WelcomeHeader from "../components/WelcomeHeader";
+import StatCard from "../components/StatCard";
 import Skeleton from "../components/Skeleton";
+import { AppContext } from "../context/AppContext";
 
 export default function SuperAdminDashboard() {
+  const { user } = useContext(AppContext);
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -50,21 +55,53 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const activeTenants = tenants.filter((t) => t.isActive).length;
+  const inactiveTenants = tenants.filter((t) => !t.isActive).length;
+
   return (
-    <div className="page">
+    <DashboardLayout>
       <Helmet>
         <title>Super Admin Dashboard - Fleetiva Roadlines</title>
-        <meta name="description" content="Manage tenants, subscriptions, and system-wide settings." />
+        <meta
+          name="description"
+          content="Manage tenants, subscriptions, and system-wide settings."
+        />
       </Helmet>
-      <div className="page-content">
-        <div className="page-header" style={{ marginBottom: "24px" }}>
+
+      <WelcomeHeader
+        name={user?.name}
+        subtitle="Oversee tenant subscriptions and platform access at a glance."
+      />
+
+      {/* Stats */}
+      <div className="stat-grid">
+        <StatCard
+          icon="🏢"
+          label="Total Companies"
+          value={tenants.length}
+          accent="#6366f1"
+        />
+        <StatCard
+          icon="✅"
+          label="Active"
+          value={activeTenants}
+          accent="#22c55e"
+        />
+        <StatCard
+          icon="⏸️"
+          label="Inactive"
+          value={inactiveTenants}
+          accent="#ef4444"
+        />
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="dash-section" style={{ marginTop: "24px" }}>
+        <div className="flex gap-4 items-center" style={{ marginBottom: "16px" }}>
           <div style={{ flex: 1 }}>
-            <h2 className="page-title">Company Management</h2>
-            <p className="page-subtitle">
-              Oversee tenant subscriptions and platform access at a glance.
-            </p>
+            <h3 className="dash-section-title" style={{ margin: 0 }}>Registered Companies</h3>
           </div>
-          <div className="flex gap-4" style={{ marginTop: "16px" }}>
+          <div className="flex gap-4">
             <input
               type="text"
               placeholder="Search companies..."
@@ -86,56 +123,74 @@ export default function SuperAdminDashboard() {
           </div>
         </div>
 
-        <section className="stack">
-          <div className="flex justify-between items-center">
-            <h3 className="section-title">Registered Companies</h3>
-            <span className="text-muted">
-              Showing {filteredTenants.length} of {tenants.length}
-            </span>
+        {loading ? (
+          <div className="card-grid cols-2">
+            {[1, 2].map((n) => (
+              <div
+                key={n}
+                style={{ padding: 20, background: "#f8fafc", borderRadius: 16 }}
+              >
+                <Skeleton width="100%" height="100px" borderRadius="16px" />
+              </div>
+            ))}
           </div>
-
-          {loading ? (
-            <div className="card-grid cols-2">
-              {[1, 2].map((n) => (
-                <div key={n} className="card">
-                  <Skeleton width="100%" height="120px" borderRadius="16px" />
-                </div>
-              ))}
-            </div>
-          ) : filteredTenants.length === 0 ? (
-            <div className="card text-center" style={{ padding: "40px" }}>
-              <p className="text-muted">No companies found matching your criteria.</p>
-            </div>
-          ) : (
-            <div className="card-grid cols-2">
-              {filteredTenants.map((tenant) => (
-                <div key={tenant._id} className="card">
-                  <div className="page-header">
-                    <div>
-                      <p style={{ margin: 0, fontWeight: 700 }}>{tenant.name}</p>
-                      <p className="text-muted" style={{ margin: "6px 0 0" }}>
-                        Plan: {tenant.plan?.toUpperCase()}
-                      </p>
-                    </div>
-                    <span
-                      className={`tag ${tenant.isActive ? "success" : "danger"}`}
+        ) : filteredTenants.length === 0 ? (
+          <div className="dash-empty">
+            <span className="dash-empty-icon">🏢</span>
+            <p className="dash-empty-title">No companies found</p>
+            <p className="dash-empty-desc">
+              Try adjusting your search or filter criteria.
+            </p>
+          </div>
+        ) : (
+          <div className="card-grid cols-2">
+            {filteredTenants.map((tenant) => (
+              <div
+                key={tenant._id}
+                className="dash-booking-card"
+                style={{ flexDirection: "column", alignItems: "stretch" }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontWeight: 700,
+                        fontSize: 16,
+                        color: "#0f172a",
+                      }}
                     >
-                      {tenant.isActive ? "Active" : "Inactive"}
-                    </span>
+                      {tenant.name}
+                    </p>
+                    <p style={{ margin: "4px 0 0", fontSize: 13, color: "#64748b" }}>
+                      Plan: {tenant.plan?.toUpperCase()}
+                    </p>
                   </div>
-                  <button
-                    onClick={() => toggleTenantStatus(tenant._id, tenant.isActive)}
-                    className={`btn ${tenant.isActive ? "btn-danger" : "btn-success"}`}
-                    style={{ width: "100%", marginTop: 16 }}
+                  <span
+                    className={`tag ${tenant.isActive ? "success" : "danger"}`}
                   >
-                    {tenant.isActive ? "Deactivate" : "Activate"}
-                  </button>
+                    {tenant.isActive ? "Active" : "Inactive"}
+                  </span>
                 </div>
-              ))}
-            </div>
-          )}
-        </section>
+                <button
+                  onClick={() => toggleTenantStatus(tenant._id, tenant.isActive)}
+                  className={`btn btn-sm ${tenant.isActive ? "btn-danger" : "btn-success"
+                    }`}
+                  style={{ width: "100%", marginTop: 14 }}
+                >
+                  {tenant.isActive ? "Deactivate" : "Activate"}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
