@@ -113,7 +113,7 @@ router.post('/register', asyncHandler(async (req, res) => {
  * @access  Public
  */
 router.post('/login', asyncHandler(async (req, res) => {
-  const { error } = loginSchema.validate(req.body, { abortEarly: false });
+  const { error, value } = loginSchema.validate(req.body, { abortEarly: false });
   if (error) {
     return res.status(400).json({
       message: 'Validation failed',
@@ -121,7 +121,7 @@ router.post('/login', asyncHandler(async (req, res) => {
     });
   }
 
-  const { email, password } = req.body;
+  const { email, password } = value;
 
   const user = await User.findOne({ email });
   if (!user || !user.password) {

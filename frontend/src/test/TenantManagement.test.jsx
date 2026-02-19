@@ -8,7 +8,12 @@ import { MemoryRouter } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 
 vi.mock("../api/axios");
-vi.mock("react-hot-toast");
+vi.mock("react-hot-toast", () => ({
+    toast: {
+        success: vi.fn(),
+        error: vi.fn(),
+    },
+}));
 
 const MockAppProvider = ({ children }) => (
     <AppContext.Provider value={{ user: { name: "Admin Test", role: "superadmin" }, logout: vi.fn() }}>
@@ -59,7 +64,9 @@ describe("SuperAdminDashboard", () => {
         const deactivateBtn = await screen.findByText("Deactivate");
         fireEvent.click(deactivateBtn);
 
-        expect(api.patch).toHaveBeenCalledWith("/tenants/1/status", { isActive: false });
+        await waitFor(() => {
+            expect(api.patch).toHaveBeenCalledWith("/tenants/1/status", { isActive: false });
+        });
 
         await waitFor(() => {
             expect(toast.success).toHaveBeenCalledWith("Status updated successfully");
@@ -87,8 +94,10 @@ describe("SuperAdminDashboard", () => {
         const searchInput = screen.getByPlaceholderText(/Search companies.../i);
         fireEvent.change(searchInput, { target: { value: "Company A" } });
 
-        expect(screen.getByText("Company A")).toBeInTheDocument();
-        expect(screen.queryByText("Company B")).not.toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText("Company A")).toBeInTheDocument();
+            expect(screen.queryByText("Company B")).not.toBeInTheDocument();
+        });
     });
 
     it("filters tenants by status", async () => {
@@ -100,12 +109,16 @@ describe("SuperAdminDashboard", () => {
 
         // Filter by Active
         fireEvent.change(statusSelect, { target: { value: "active" } });
-        expect(screen.getByText("Company A")).toBeInTheDocument();
-        expect(screen.queryByText("Company B")).not.toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText("Company A")).toBeInTheDocument();
+            expect(screen.queryByText("Company B")).not.toBeInTheDocument();
+        });
 
         // Filter by Inactive
         fireEvent.change(statusSelect, { target: { value: "inactive" } });
-        expect(screen.queryByText("Company A")).not.toBeInTheDocument();
-        expect(screen.getByText("Company B")).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.queryByText("Company A")).not.toBeInTheDocument();
+            expect(screen.getByText("Company B")).toBeInTheDocument();
+        });
     });
 });
