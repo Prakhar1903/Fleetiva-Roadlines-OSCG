@@ -8,6 +8,12 @@ import StatCard from "../components/StatCard";
 import Skeleton from "../components/Skeleton";
 import { AppContext } from "../context/AppContext";
 
+/**
+ * SuperAdminDashboard Component
+ * Provides a high-level overview of all tenants, including search,
+ * status filtering, and management capabilities.
+ * @returns {JSX.Element}
+ */
 export default function SuperAdminDashboard() {
   const { user } = useContext(AppContext);
   const [tenants, setTenants] = useState([]);
@@ -19,6 +25,11 @@ export default function SuperAdminDashboard() {
     fetchTenants();
   }, []);
 
+  /**
+   * Fetches the list of all tenants from the backend.
+   * Updates the tenants state and handles loading/error states.
+   * @async
+   */
   const fetchTenants = async () => {
     setLoading(true);
     try {
@@ -32,6 +43,10 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  /**
+   * Memoized list of tenants filtered by searchQuery and statusFilter.
+   * @type {Array<Object>}
+   */
   const filteredTenants = useMemo(() => {
     return tenants.filter((tenant) => {
       const matchesSearch = tenant.name
@@ -44,6 +59,12 @@ export default function SuperAdminDashboard() {
     });
   }, [tenants, searchQuery, statusFilter]);
 
+  /**
+   * Toggles the active status of a specific tenant.
+   * @async
+   * @param {string} id - The unique identifier of the tenant.
+   * @param {boolean} currentStatus - The current active status of the tenant.
+   */
   const toggleTenantStatus = async (id, currentStatus) => {
     try {
       await api.patch(`/tenants/${id}/status`, { isActive: !currentStatus });

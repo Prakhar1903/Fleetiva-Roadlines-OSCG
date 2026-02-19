@@ -54,6 +54,11 @@ const logLoginAttempt = ({ req, user, email, provider, status, reason }) =>
     userAgent: req.get('user-agent'),
   }).catch(() => { });
 
+/**
+ * @route   POST /api/auth/register
+ * @desc    Registers a new user (customer, driver, or admin).
+ * @access  Public
+ */
 router.post('/register', asyncHandler(async (req, res) => {
   const { error, value } = registerSchema.validate(req.body, { abortEarly: false });
   if (error) {
@@ -102,6 +107,11 @@ router.post('/register', asyncHandler(async (req, res) => {
   });
 }));
 
+/**
+ * @route   POST /api/auth/login
+ * @desc    Authenticates a user and returns an access token.
+ * @access  Public
+ */
 router.post('/login', asyncHandler(async (req, res) => {
   const { error } = loginSchema.validate(req.body, { abortEarly: false });
   if (error) {
